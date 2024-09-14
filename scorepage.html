@@ -1,0 +1,74 @@
+<html>
+<head>
+    <title>Final Score</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: white;
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
+        .score-container {
+            text-align: center;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .score {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .rank {
+            font-size: 36px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+        }
+        .rank1 {
+            background-color: #FFD700; /* ゴールド */
+        }
+        .rank2 {
+            background-color: #C0C0C0; /* シルバー */
+        }
+        .rank3 {
+            background-color: #CD7F32; /* ブロンズ */
+        }
+    </style>
+</head>
+<body>
+    <div class="score-container">
+        <div class="title">あなたの福岡市愛は・・・</div>
+        <div class="score">Total Score: <strong id="total-score"></strong>点です！</div>
+        <div class="rank" id="rank"></div>
+    </div>
+
+    <script>
+        // sessionStorageからスコアを取得
+        const totalScore = sessionStorage.getItem('totalScore');
+
+        // HTML内のスコア表示エリアを更新
+        document.getElementById('total-score').textContent = totalScore;
+
+        // ランクを判定し、適切なランクを表示
+        const rankElement = document.getElementById('rank');
+        
+        if (totalScore >= 10001) {
+            rankElement.textContent = 'ランク1: あなたは真の福岡市マスターです！';
+            rankElement.classList.add('rank1');
+        } else if (totalScore >= 101 && totalScore <= 10000) {
+            rankElement.textContent = 'ランク2: 福岡市をよく知っていますね！';
+            rankElement.classList.add('rank2');
+        } else if (totalScore >= 5 && totalScore <= 100) {
+            rankElement.textContent = 'ランク3: もっと福岡市を探索しましょう！';
+            rankElement.classList.add('rank3');
+        }
+    </script>
+</body>
+</html>
