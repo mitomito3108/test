@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fukuoka Geoguesser - Start</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://maps.gstatic.com/tactile/omnibox/geo_icons_2x_web_2.png');
+            background-size: cover;
+            font-family: Arial, sans-serif;
+        }
+        #start-screen {
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 50px;
+            border-radius: 15px;
+            color: white;
+            max-width: 600px;
+        }
+        #game-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #game-description {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        #score-table {
+            text-align: left;
+            margin: 0 auto;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        #start-button {
+            font-size: 20px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #start-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <div id="game-title">ふくおかげっさー</div>
+        <div id="game-description">このゲームはストリートビューの画面がどの場所を指すものか当てるゲームです。</div>
+        <div id="score-table">
+            <strong>点数表:</strong><br>
+            距離スコア: 100m以内 = 100点、200m以内 = 90点、500m以内 = 70点、1km以内 = 50点、10km以上 = 1点<br>
+            時間スコア: 30秒以内 = 100点、60秒以内 = 80点、120秒以内 = 40点、180秒以上 = 1点
+        </div>
+        <button id="start-button" onclick="startGame()">スタート</button>
+    </div>
+
+    <script>
+        function startGame() {
+            // ゲームのHTMLファイルに遷移
+            window.location.href = 'Fukguesser.html'; // ゲーム用HTMLファイルにリンク
+        }
+    </script>
+</body>
+</html>
