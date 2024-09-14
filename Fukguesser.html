@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street View Game with Scoring</title>
+    <style>
+        #street-view {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+        #map {
+            height: 25vh; /* 画面の縦の4分の1 */
+            width: 25vw; /* 画面の横の4分の1 */
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            border: 2px solid black; /* 枠線を追加 */
+            z-index: 1000; /* ストリートビューの上に表示 */
+        }
+        #decide-button {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 10vw; /* 画面の横の10分の1 */
+            height: 10vh; /* 画面の縦の5分の1 */
+            z-index: 1500;
+            background-color: green;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #message-window {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            padding: 20px;
+            background-color: white;
+            border: 2px solid black;
+            border-radius: 10px;
+            z-index: 2000;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #next-button {
+            position: absolute; 
+            top: 75%;
+            left: 35%;
+            /* align-items: center; */
+            /* justify-content: center; */
+            width: 250px;
+            /* max-width: 320px; */
+            height: 64px;
+            padding: 8px 24px;
+            font-family: sans-serif;
+            font-size: 16px;
+            color: #fff;
+            text-align: center;
+            overflow-wrap: anywhere;
+            background-color: #6fa24a;
+            border-radius: 32px; /* (buttonの高さ / 2) の値 */
+            z-index: 2000;
+            display: none; /* 初期状態では非表示 */
+        }
+
+        #line-map {
+            height: 50vh;
+            width: 50vw;
+            position: absolute;
+            top: 20%;
+            left: 25%;
+            border: 2px solid black;
+            z-index: 1000;
+            background-color: white;
+            display: none; /* 初期状態では非表示 */
+        }
+        #timer-score-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #timer {
+            font-size: 18px;
+        }
+        #score {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        #roundnumber {
+            position: absolute;
+            top: 10px;
+            left: 0px;
+            width: 200px; /* 画面の横の10分の1 */
+            height: 60px; /* 画面の縦の5分の1 */
+            z-index: 1500;
+            background-color:white;
+            /* color: white; */
+            border: none;
+            text-align: center;
+            line-height:60px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 32px; /* (buttonの高さ / 2) の値 */
+        }
+    </style>
+</head>
+<body>
+    <div id="roundnumber"></div>
+    <div id="street-view"></div>
+    <div id="map"></div>
+    <button id="decide-button">この場所に決定</button>
+    <div id="message-window" style="display:none;">
+        <!-- <div id="message-content"></div> -->
+    </div>
+    <button id="next-button">次のラウンドに進む</button>
+    <div id="line-map"></div>
+    <div id="timer-score-container">
+    <div id="timer">Time: 0s</div>
+    <div id="score">Score: 0</div>
+    </div>
+</body>
+</html>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAGP8LNjj4a0K1rU6BHaSf0AR2BhPx2O6o&libraries=geometry&callback=initMapAndStreetView" async defer></script>
+    <script>
+        let panorama;
+        let map;
+        let marker;
+        let randomLocation;
+        let lineMap;
+        let startTime;
+        let timerInterval;
+        let totalScore = 0;
+        let round = 1;
+        var distanceScore = 0;
+        var timeScore = 0;
+        var roundScore = 0;
+        const maxRounds = 5;
+        
+
+        
+        function initMapAndStreetView() {
+            setupGame();
+        }
+
+        function setupGame() {
+            // ラウンド数の取得
+            document.getElementById('roundnumber').textContent = `ラウンド: ${round}` ;
+
+            // 福岡市内の緯度と経度の範囲を設定
+            const fukuokaBounds = {
+                north: 33.705,
+                south: 33.475,
+                east: 130.515,
+                west: 130.275
+            };
+
+            // ランダムな緯度経度を福岡市内で生成
+            let lat = fukuokaBounds.south + (Math.random() * (fukuokaBounds.north - fukuokaBounds.south));
+            let lng = fukuokaBounds.west + (Math.random() * (fukuokaBounds.east - fukuokaBounds.west));
+            randomLocation = {lat: lat, lng: lng};
+
+            // ストリートビューのパノラマを設定
+            panorama = new google.maps.StreetViewPanorama(
+                document.getElementById('street-view'), {
+                    position: randomLocation,
+                    pov: {
+                        heading: 34,
+                        pitch: 10
+                    }
+                });
+
+            // ランダムな地点のストリートビューが利用可能か確認
+            let streetViewService = new google.maps.StreetViewService();
+            streetViewService.getPanorama({ location: randomLocation, radius: 5000 }, processSVData);
+            
+            
+            function processSVData(data, status) {
+            if (status === 'OK') {
+                // 利用可能な場合、パノラマをその地点に設定
+                panorama.setPosition(data.location.latLng);
+                panorama.setPov({
+                    heading: 270,
+                    pitch: 0
+                });
+                panorama.setVisible(true);
+            } else {
+                // 利用不可の場合、代替メッセージを表示
+                alert('Street View is not available for this location.');
+            }
+                }
+
+            // 右下の小さなマップを設定
+            const mapCenter = { lat: 33.5900684, lng: 130.4016776 };
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: mapCenter,
+                zoom: 16
+            });
+
+            // 初期マーカーを設定
+            marker = new google.maps.Marker({
+                position: mapCenter,
+                map: map
+            });
+
+            // マップクリックイベントを設定して、クリックした地点にマーカーを移動
+            map.addListener('click', function(event) {
+                // マーカーの位置をクリックした場所に設定
+                marker.setPosition(event.latLng);
+                map.panTo(event.latLng);
+            });
+
+            // タイマーを開始
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+       function showFullScreenMap() {
+            const lineMapDiv = document.getElementById('line-map');
+            lineMapDiv.style.display = 'block';
+
+            lineMap = new google.maps.Map(lineMapDiv, {
+                center: randomLocation,
+                zoom: 14
+            }); 
+
+            new google.maps.Marker({
+                position: randomLocation,
+                map: lineMap,
+                label: "正解"
+            });
+
+            new google.maps.Marker({
+                position: marker.getPosition(),
+                map: lineMap,
+                label: ""
+            });
+
+            const line = new google.maps.Polyline({
+                path: [randomLocation, marker.getPosition()],
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: lineMap
+            });
+
+            document.getElementById('next-button').addEventListener('click', function() {
+                lineMapDiv.style.display = 'none';
+            });
+        }
+
+        function showMessageWindow(message) {
+            const messageWindow = document.getElementById('message-window');
+
+            messageWindow.innerHTML = message;
+            messageWindow.style.display = 'block';
+
+            document.getElementById('next-button').addEventListener('click', function() {
+                messageWindow.style.display = 'none';
+            });
+        }
+
+        function calculateDistance() {
+            const markerPosition = marker.getPosition();
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                new google.maps.LatLng(randomLocation.lat, randomLocation.lng),
+                markerPosition
+            );
+
+                const timeTaken = Math.floor((new Date() - startTime) / 1000);
+                distanceScore = getDistanceScore(distance);
+                timeScore = getTimeScore(timeTaken);
+                roundScore = distanceScore * timeScore;
+                totalScore += roundScore;
+
+
+        }
+
+        function updateTimer() {
+            const timeElapsed = Math.floor((new Date() - startTime) / 1000);
+            document.getElementById('timer').innerText = `Time: ${timeElapsed}s`;
+        }
+
+        function getDistanceScore(distance) {
+            if (distance <= 100) return 100;
+            if (distance <= 200) return 90;
+            if (distance <= 300) return 80;
+            if (distance <= 500) return 70;
+            if (distance <= 750) return 60;
+            if (distance <= 1000) return 50;
+            if (distance <= 2000) return 25;
+            if (distance <= 5000) return 10;
+            if (distance <= 10000) return 5;
+            return 1;
+        }
+
+        function getTimeScore(time) {
+            if (time <= 30) return 100;
+            if (time <= 60) return 80;
+            if (time <= 90) return 60;
+            if (time <= 120) return 40;
+            if (time <= 180) return 20;
+            return 1;
+        }
+
+
+
+        function endGame() {
+            // totalScoreをsessionStorageに保存
+            sessionStorage.setItem('totalScore', totalScore);
+            // scorepage.htmlにリダイレクト
+            window.location.href = 'scorepage.html';
+        }
+
+        // function showFinalScore() {
+        //     // 最終スコアを新しいページで派手に表示
+        //     const finalPage = window.open("", "_blank");
+        //     finalPage.document.write(`
+        //         <html>
+        //         <head><title>Final Score</title></head>
+        //         <body style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: black; color: white; font-size: 36px;">
+        //             <div>
+        //                 <h1>あなたの福岡市愛は・・・</h1>
+        //                 <h2>Total Score: ${totalScore}点です！</h2>
+        //             </div>
+        //         </body>
+        //         </html>
+        //     `);
+        //     finalPage.document.close();
+        // }
+
+        // ボタンクリックで直線距離を計算して表示し、ラインを描画するマップを表示
+        document.getElementById('decide-button').addEventListener('click', function() {
+        clearInterval(timerInterval); // タイマーを停止
+        
+        showFullScreenMap();
+        calculateDistance();
+        
+        const nextbutton = document.getElementById('next-button');
+        nextbutton.style.display = 'block';
+        
+        showMessageWindow(`ラウンド ${round}　　距離スコア: ${distanceScore}, 時間スコア: ${timeScore}　　合計: ${roundScore}`);
+        
+        document.getElementById('score').innerText = `Score: ${totalScore}`;
+
+        // 次に進むボタンで次のゲームに進む
+        document.getElementById('next-button').addEventListener('click', function() {
+
+            if (round <= maxRounds) {
+                round++;
+                setupGame(); // 次のラウンドを開始
+            } else {
+                endGame();
+
+            }
+        nextbutton.style.display = 'none';
+
+        });
+                });
+
+        
+       
+    </script>
+
