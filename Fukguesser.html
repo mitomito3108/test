@@ -131,7 +131,7 @@
     </div>
 </body>
 </html>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAGP8LNjj4a0K1rU6BHaSf0AR2BhPx2O6o&libraries=geometry&callback=initMapAndStreetView" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAGP8LNjj4a0K1rU6BHaSf0AR2BhPx2O6o&libraries=geometry&libraries=places&callback=initMapAndStreetView" async defer></script>
     <script>
         let panorama;
         let map;
@@ -146,7 +146,9 @@
         var timeScore = 0;
         var roundScore = 0;
         const maxRounds = 5;
-        
+        let messageWindow;
+        let lineMapDiv
+                
 
         
         function initMapAndStreetView() {
@@ -169,6 +171,7 @@
             let lat = fukuokaBounds.south + (Math.random() * (fukuokaBounds.north - fukuokaBounds.south));
             let lng = fukuokaBounds.west + (Math.random() * (fukuokaBounds.east - fukuokaBounds.west));
             randomLocation = {lat: lat, lng: lng};
+            sessionStorage.setItem(`round${round}_location`, JSON.stringify(randomLocation));
 
             // ストリートビューのパノラマを設定
             panorama = new google.maps.StreetViewPanorama(
@@ -226,7 +229,7 @@
         }
 
        function showFullScreenMap() {
-            const lineMapDiv = document.getElementById('line-map');
+            lineMapDiv = document.getElementById('line-map');
             lineMapDiv.style.display = 'block';
 
             lineMap = new google.maps.Map(lineMapDiv, {
@@ -255,20 +258,19 @@
                 map: lineMap
             });
 
-            document.getElementById('next-button').addEventListener('click', function() {
-                lineMapDiv.style.display = 'none';
-            });
+            // document.getElementById('next-button').addEventListener('click', function() {
+            //     lineMapDiv.style.display = 'none';
+            // });
         }
 
         function showMessageWindow(message) {
-            const messageWindow = document.getElementById('message-window');
-
+            messageWindow = document.getElementById('message-window');
             messageWindow.innerHTML = message;
             messageWindow.style.display = 'block';
 
-            document.getElementById('next-button').addEventListener('click', function() {
-                messageWindow.style.display = 'none';
-            });
+            // document.getElementById('next-button').addEventListener('click', function() {
+            //     messageWindow.style.display = 'none';
+            // });
         }
 
         function calculateDistance() {
@@ -344,30 +346,32 @@
         document.getElementById('decide-button').addEventListener('click', function() {
         clearInterval(timerInterval); // タイマーを停止
         
-        showFullScreenMap();
-        calculateDistance();
-        
-        const nextbutton = document.getElementById('next-button');
-        nextbutton.style.display = 'block';
-        
-        showMessageWindow(`ラウンド ${round}　　距離スコア: ${distanceScore}, 時間スコア: ${timeScore}　　合計: ${roundScore}`);
-        
-        document.getElementById('score').innerText = `Score: ${totalScore}`;
+            showFullScreenMap();
+            calculateDistance();
+            
+            const nextbutton = document.getElementById('next-button');
+            nextbutton.style.display = 'block';
+            
+            showMessageWindow(`ラウンド ${round}　　距離スコア: ${distanceScore}, 時間スコア: ${timeScore}　　合計: ${roundScore}`);
+            
+            document.getElementById('score').innerText = `Score: ${totalScore}`;
+
+        });
 
         // 次に進むボタンで次のゲームに進む
         document.getElementById('next-button').addEventListener('click', function() {
 
-            if (round <= maxRounds) {
+            if (round < maxRounds) {
                 round++;
                 setupGame(); // 次のラウンドを開始
             } else {
                 endGame();
 
             }
-        nextbutton.style.display = 'none';
-
+            document.getElementById('next-button').style.display = 'none';
+            document.getElementById('line-map').style.display = 'none';
+            document.getElementById('message-window').style.display = 'none';
         });
-                });
 
         
        
