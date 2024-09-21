@@ -49,8 +49,9 @@
 
         #next-button {
             position: absolute; 
-            top: 75%;
-            left: 35%;
+            top: 80%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             /* align-items: center; */
             /* justify-content: center; */
             width: 250px;
@@ -148,6 +149,7 @@
         const maxRounds = 5;
         let messageWindow;
         let lineMapDiv
+        let voices = speechSynthesis.getVoices().filter((v) => v.lang === 'ja-JP');
                 
 
         
@@ -164,7 +166,8 @@
                 north: 33.705,
                 south: 33.475,
                 east: 130.515,
-                west: 130.275
+                west: 130.195
+                
             };
 
             // ランダムな緯度経度を福岡市内で生成
@@ -315,7 +318,17 @@
             if (time <= 180) return 20;
             return 1;
         }
-
+            function playScoreSound(score) {
+                let sound;
+                if (score >= 5001) {
+                    sound = new Audio('high-score.mp3'); // 高得点用の音声
+                } else if (score >= 1001) {
+                    sound = new Audio('medium-score.mp3'); // 中得点用の音声
+                } else {
+                    sound = new Audio('low-score.mp3'); // 低得点用の音声
+                }
+                sound.play();
+            }
 
 
         function endGame() {
@@ -344,8 +357,28 @@
 
         // ボタンクリックで直線距離を計算して表示し、ラインを描画するマップを表示
         document.getElementById('decide-button').addEventListener('click', function() {
-        clearInterval(timerInterval); // タイマーを停止
-        
+                   
+
+           
+            (async()=>{
+
+                // //音声
+                // const uttr = new SpeechSynthesisUtterance();
+                // voices = speechSynthesis.getVoices().filter((v) => v.lang === 'ja-JP');
+                // // 声を選択
+                // uttr.voice = voices[2];
+                // // 文章を設定
+                // uttr.text = "いまから福岡げっさーをはじめます";
+                // // 速度 0.1-10
+                // uttr.rate = 1.5
+                // // 高さ 0-2
+                // uttr.pitch = 2
+                // // 音量 0-1
+                // uttr.volume = 1
+                
+                // speechSynthesis.speak(uttr);
+
+            clearInterval(timerInterval); // タイマーを停止
             showFullScreenMap();
             calculateDistance();
             
@@ -356,6 +389,15 @@
             
             document.getElementById('score').innerText = `Score: ${totalScore}`;
 
+            const sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
+            await sleep(400);
+            
+
+            playScoreSound(roundScore);
+            })();
+
+            
         });
 
         // 次に進むボタンで次のゲームに進む
